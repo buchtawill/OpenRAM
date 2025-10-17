@@ -70,8 +70,8 @@ $(SKY130_PDKS_DIR): check-pdk-root
 	@echo "Cloning skywater PDK..."
 	@[ -d $(PDK_ROOT)/skywater-pdk ] || \
 		git clone https://github.com/google/skywater-pdk.git $(PDK_ROOT)/skywater-pdk
-	@git -C $(SKY130_PDKS_DIR) checkout $(SKY130_PDKS_GIT_COMMIT) && \
-		git -C $(SKY130_PDKS_DIR) submodule update --init libraries/sky130_fd_pr/latest libraries/sky130_fd_sc_hd/latest
+	@cd $(SKY130_PDKS_DIR) && git checkout $(SKY130_PDKS_GIT_COMMIT) && \
+		git submodule update --init libraries/sky130_fd_pr/latest libraries/sky130_fd_sc_hd/latest
 
 $(GF180_PDKS_DIR): check-pdk-root
 	@echo "Cloning gf PDK..."
@@ -86,8 +86,8 @@ $(SRAM_LIB_DIR): check-pdk-root
 	@echo "Cloning SRAM library..."
 	@[ -d $(SRAM_LIB_DIR) ] || \
 		git clone $(SRAM_LIB_GIT_REPO) $(SRAM_LIB_DIR)
-	@git -C $(SRAM_LIB_DIR) fetch
-	@git -C $(SRAM_LIB_DIR) checkout $(SRAM_LIB_GIT_COMMIT)
+	@cd $(SRAM_LIB_DIR) && git fetch
+	@cd $(SRAM_LIB_DIR) && git checkout $(SRAM_LIB_GIT_COMMIT)
 
 sky130-install: $(SRAM_LIB_DIR)
 	@[ -d $(PDK_ROOT)/sky130A ] || \
