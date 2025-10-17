@@ -10,6 +10,16 @@ import sys, os, glob
 import pdb
 import traceback
 import time
+
+# Compute OPENRAM repo root relative to this file
+OPENRAM_HOME = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+# Ensure repo root is on sys.path so python can import top-level modules
+if OPENRAM_HOME not in sys.path:
+    sys.path.insert(0, OPENRAM_HOME)
+
+import common
+common.make_openram_package()
+
 from openram import debug
 from openram import OPTS
 

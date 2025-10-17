@@ -1,0 +1,11 @@
+*
+!.gitignore
+!Makefile
+!rom_configs
+!rom_configs/**
+
+!plot_spice.py
+
+!sram_configs
+!sram_configs/**
+**/__pycache__/**

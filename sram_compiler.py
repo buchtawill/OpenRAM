@@ -27,6 +27,8 @@ import openram
 
 (OPTS, args) = openram.parse_args()
 
+print(f"INFO [sram_compiler.py] Openram package is being pulled from {openram.__file__}")
+
 # Check that we are left with a single configuration file as argument.
 if len(args) != 1:
     print(openram.USAGE)

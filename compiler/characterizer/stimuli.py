@@ -242,14 +242,24 @@ class stimuli():
 
         if OPTS.spice_name == "ngspice":
             self.sf.write(".TEMP {}\n".format(self.temperature))
-            # UIC is needed for ngspice to converge
-            # Format: .tran tstep tstop < tstart < tmax >>
-            self.sf.write(".TRAN {0}p {1}n 0n {0}p UIC\n".format(timestep, end_time))
             # ngspice sometimes has convergence problems if not using gear method
             # which is more accurate, but slower than the default trapezoid method
             # Do not remove this or it may not converge due to some "pa_00" nodes
             # unless you figure out what these are.
             self.sf.write(".OPTIONS POST=1 RELTOL={0} PROBE method=gear ACCT\n".format(reltol))
+            
+            
+            # UIC is needed for ngspice to converge
+            # Format: .tran tstep tstop < tstart < tmax >>
+            self.sf.write(".TRAN {0}p {1}n 0n {0}p UIC\n".format(timestep, end_time))
+            self.sf.write(".control\n")
+            self.sf.write("run\n")
+            self.sf.write("write sim_results.rawspice\n")
+            self.sf.write("quit\n")
+            self.sf.write(".endc\n")
+            
+            # self.sf.write("plot V(clk0)\n")
+            
         elif OPTS.spice_name == "spectre":
             self.sf.write(".TEMP {}\n".format(self.temperature))
             self.sf.write("simulator lang=spectre\n")
@@ -286,19 +296,19 @@ class stimuli():
             debug.error("Unkown spice simulator {}".format(OPTS.spice_name), -1)
 
         # create plots for all signals
-        if not OPTS.use_pex:   # Don't save all for extracted simulations
-            self.sf.write("* probe is used for hspice/xa, while plot is used in ngspice\n")
-            if OPTS.verbose_level>0:
-                if OPTS.spice_name in ["hspice", "xa"]:
-                    self.sf.write(".probe V(*)\n")
-                elif OPTS.spice_name != "Xyce":
-                    self.sf.write(".plot V(*)\n")
-            else:
-                self.sf.write("*.probe V(*)\n")
-                self.sf.write("*.plot V(*)\n")
+        # if not OPTS.use_pex:   # Don't save all for extracted simulations
+        #     self.sf.write("* probe is used for hspice/xa, while plot is used in ngspice\n")
+        #     if OPTS.verbose_level>0:
+        #         if OPTS.spice_name in ["hspice", "xa"]:
+        #             self.sf.write(".probe V(*)\n")
+        #         elif OPTS.spice_name != "Xyce":
+        #             self.sf.write(".plot V(*)\n")
+        #     else:
+        #         self.sf.write("*.probe V(*)\n")
+        #         self.sf.write("*.plot V(*)\n")
 
         # end the stimulus file
-        self.sf.write(".end\n\n")
+        # self.sf.write(".end\n\n")
 
     def write_include(self, circuit):
         """Writes include statements, inputs are lists of model files"""
