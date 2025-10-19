@@ -7,11 +7,12 @@ import subprocess
 from spicelib import RawRead
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-
+import pickle
 import time
+import numpy as np
 
-# DUT_NAME = 'example_config_freepdk45'
-DUT_NAME = 'freepdk45_1rw_32x64_8'
+DUT_NAME = 'example_config_freepdk45'
+# DUT_NAME = 'freepdk45_1rw_32x64_8'
 STOP_TIME = '100n'
 
 # Name of signals and order to plot them
@@ -23,6 +24,7 @@ SIGNALS = [
     f'x{DUT_NAME}.w_en0',
     f'x{DUT_NAME}.wl_en0',
     f'x{DUT_NAME}.p_en_bar0',
+    f'csb0',
     f'clk0',
 ]
 
@@ -57,26 +59,29 @@ def run_spice(file_path:str):
     env["DISPLAY"] = os.getenv("DISPLAY", ":0")  # Ensure X display is passed through
     subprocess.run(["ngspice", file_path], env=env)
 
-def plot_signals(plot_start:float, plot_stop:float):
+def plot_signals(plot_start:float, plot_end:float):
     '''
     Open the raw binary file
     '''
     # 5440 traces for example_config_freepdk45
     tstart = time.perf_counter()
     
-    import pickle
-    
-    # rawfile = RawRead(rawfile_path)
-    # with open(rawfile_pkl_path, 'wb') as f:
-    #     pickle.dump(rawfile, f, protocol=pickle.HIGHEST_PROTOCOL)    
-    with open(rawfile_pkl_path, 'rb') as f:
-        rawfile = pickle.load(f)
+    if (os.path.exists(rawfile_pkl_path)): 
+        with open(rawfile_pkl_path, 'rb') as f:
+            rawfile = pickle.load(f)
+    else:
+         rawfile = RawRead(rawfile_path)
+         with open(rawfile_pkl_path, 'wb') as f:
+             pickle.dump(rawfile, f, protocol=pickle.HIGHEST_PROTOCOL)    
     
     tend = time.perf_counter()
-    print(f'{(tend - tstart):.2f}')
-    sim_time = rawfile.get_trace('time').data * 1e9
-    print(f'Num datapoints: {len(sim_time)}')
+    print(f'Time to load raw traces: {(tend - tstart):.2f}')
     
+    sim_time_ns = rawfile.get_trace('time').data * 1e9
+    print(f'Num datapoints: {len(sim_time_ns)}')
+
+    t_pre_plot = time.perf_counter()
+ 
     for i in range(len(SIGNALS)):
         sig = SIGNALS[i]
         try:
@@ -87,15 +92,14 @@ def plot_signals(plot_start:float, plot_stop:float):
             
             # Don't print hierarchy
             sig_name = sig.split('.')[-1]
-            plt.plot(sim_time, trace_data, label=sig_name)
+            plt.plot(sim_time_ns, trace_data, label=sig_name)
             
             # Choose where to place the label (start or end of trace)
-            x_pos = sim_time[0]
             y_pos = trace_data[0]
 
             # Add text label slightly offset to avoid overlap
             plt.text(
-                plot_start + (0.025 * (plot_stop-plot_start)),  # small horizontal offset
+                plot_start + (0.025 * (plot_end-plot_start)),  # small horizontal offset
                 y_pos + 0.5,
                 sig_name,
                 fontsize=10,
@@ -119,17 +123,24 @@ def plot_signals(plot_start:float, plot_stop:float):
     ax = plt.gca()
     ax.xaxis.set_major_locator(ticker.MultipleLocator(5))
     ax.xaxis.set_minor_locator(ticker.MultipleLocator(2.5))
-    # ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
 
-    # Enable grid for both major and minor ticks
-    ax.grid(True, which='major', linestyle='-', linewidth=0.7)
-    ax.grid(True, which='minor', linestyle=':', linewidth=0.4, alpha=0.7)
+    # Set major ticks for y-axis every 1 unit
+    ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
+    ax.yaxis.set_minor_locator(ticker.NullLocator())  # disable y minor ticks
+
+    # Enable grid for both axes
+    ax.grid(True, which='major', axis='both', linestyle='-', linewidth=0.7)
+    ax.grid(True, which='minor', axis='x', linestyle=':', linewidth=0.4, alpha=0.7)
 
     plt.tight_layout()
-    plt.xlim(plot_start, plot_stop)
-    plt.savefig('test.png')
+    plt.xlim(plot_start, plot_end)
+    plt.savefig('traces.png')
+    
+    t_post_plot = time.perf_counter()
+
+    print(f'Time to plot: {(t_post_plot - t_pre_plot):.2f}')
     plt.show()
 
 if __name__ == '__main__':
-    # plot_signals(115, 135)
-    plot_signals(5, 105)
+    plot_signals(15, 35)
+    # plot_signals(5, 105)

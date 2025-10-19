@@ -11,6 +11,8 @@ human_byte_size = "{:.0f}kbytes".format((word_size * num_words)/1024/8)
 # Allow byte writes
 write_size = 2 # Bits
 
+spice_name = 'spectre'
+
 # Dual port
 num_rw_ports = 1
 num_r_ports = 0
