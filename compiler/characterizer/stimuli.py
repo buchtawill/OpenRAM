@@ -262,22 +262,24 @@ class stimuli():
             
         elif OPTS.spice_name == "spectre":
             self.sf.write(".TEMP {}\n".format(self.temperature))
-            self.sf.write("simulator lang=spectre\n")
-            if OPTS.use_pex:
-                nestlvl = 1
-                spectre_save = "selected"
-            else:
-                nestlvl = 10
-                spectre_save = "lvlpub"
-            self.sf.write('saveOptions options save={} nestlvl={} pwr=total \n'.format(spectre_save, nestlvl))
-            self.sf.write("simulatorOptions options reltol=1e-3 vabstol=1e-6 iabstol=1e-12 temp={0} try_fast_op=no "
-                          "rforce=10m maxnotes=10 maxwarns=10 "
-                          " preservenode=all topcheck=fixall "
-                          "digits=5 cols=80 dc_pivot_check=yes pivrel=1e-3 "
-                          " \n".format(self.temperature))
-            self.sf.write('tran tran step={} stop={}n ic=node write=spectre.dc errpreset=moderate '
-                          ' annotate=status maxiters=5 \n'.format("5p", end_time))
-            self.sf.write("simulator lang=spice\n")
+            
+            # EDIT: Below is written manually by post processing script
+            # self.sf.write("simulator lang=spectre\n")
+            # if OPTS.use_pex:
+            #     nestlvl = 1
+            #     spectre_save = "selected"
+            # else:
+            #     nestlvl = 10
+            #     spectre_save = "lvlpub"
+            # self.sf.write('saveOptions options save={} nestlvl={} pwr=total \n'.format(spectre_save, nestlvl))
+            # self.sf.write("simulatorOptions options reltol=1e-3 vabstol=1e-6 iabstol=1e-12 temp={0} try_fast_op=no "
+            #               "rforce=10m maxnotes=10 maxwarns=10 "
+            #               " preservenode=all topcheck=fixall "
+            #               "digits=5 cols=80 dc_pivot_check=yes pivrel=1e-3 "
+            #               " \n".format(self.temperature))
+            # self.sf.write('tran tran step={} stop={}n ic=node write=spectre.dc errpreset=moderate '
+            #               ' annotate=status maxiters=5 \n'.format("5p", end_time))
+            # self.sf.write("simulator lang=spice\n")
         elif OPTS.spice_name in ["hspice", "xa"]:
             self.sf.write(".TEMP {}\n".format(self.temperature))
             # Format: .tran tstep tstop < tstart < tmax >>
