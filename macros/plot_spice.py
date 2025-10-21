@@ -19,8 +19,8 @@ SIGNALS = [
     f'dout0_0',
     f'X{DUT_NAME}.Xbank0.bl_0_0',
     f'X{DUT_NAME}.s_en0',
-    f'csb0',
-    f'web0',
+    f'CSB0',
+    f'WEB0',
     f'X{DUT_NAME}.w_en0',
     f'X{DUT_NAME}.wl_en0',
     f'X{DUT_NAME}.p_en_bar0',
@@ -47,7 +47,7 @@ mod_spice_path = f'{dirpath}/functional_stim_modified.sp'
 rawfile_path = f'{dirpath}/sim_results.rawspice'
 rawfile_pkl_path = f'{dirpath}/sim_results.pkl'
 pkl_spectre_traces = f'{dirpath}/saved_traces.pkl'
-spectre_dump_path = f'{dirpath}/results/functional_stim_modified.sp/tran.tran.tran'
+spectre_dump_path = f'{dirpath}/results/home/jwbuchta/OpenRAM/macros/example_config_freepdk45/functional_stim_modified.sp/tran.tran.tran'
 
 def modify_spice_file(lang='ngspice'):
     # Overwrite the stimulus, plotting signals as necessary
@@ -71,12 +71,12 @@ def modify_spice_file(lang='ngspice'):
             elif(lang == 'spectre'):    
                 f.write("simulator lang=spectre\n")
                 f.write("saveOptions options save=selected nestlvl=10 pwr=total\n")
-                f.write('\nSelected signals to save \n')
+                f.write('\n* Selected signals to save \n')
                 for signal in SIGNALS:
                     f.write(f'save {signal}\n')
                 f.write('\n')
                 f.write("simulatorOptions options reltol=1e-3 vabstol=1e-6 iabstol=1e-12 temp=25 try_fast_op=no rforce=10m maxnotes=10 maxwarns=10 preservenode=all topcheck=fixall digits=5 cols=80 dc_pivot_check=yes pivrel=1e-3\n")
-                f.write("tran tran step=5p stop=1030n ic=node write=spectre.dc errpreset=moderate annotate=status maxiters=5\n")
+                f.write("tran tran step=5p stop=500n ic=node write=spectre.dc errpreset=moderate annotate=status maxiters=5\n")
                 f.write("simulator lang=spice\n")
             
 
@@ -90,12 +90,8 @@ def run_spice(file_path:str, lang='ngspice'):
     
     elif(lang == 'spectre'):
         env = os.environ.copy()
-        result = subprocess.run(['spectre', 
-                                 '+mt=16',
-                                 '-r ./results/%C',
-                                 '-f psfascii',
-                                 file_path
-                                ], env=env, stdout=None, stderr=None)
+        result = subprocess.run([f'cd {DUT_NAME}; spectre +mt=16 -r ./results/%C -f psfascii {file_path}'],
+                                shell=True, env=env, stdout=None, stderr=None)
     else:
         print(f"ERROR [run_spice] unknown lang {lang}")
         exit()
@@ -105,10 +101,14 @@ def run_spice(file_path:str, lang='ngspice'):
         
 def parse_sim_output(dump_path, SIGNALS):
     """
-    Parses the given Spectre ASCII output file and returns a dict
-    of {signal_name: np.ndarray of values} for only the signals in SIGNALS.
+    Parses a Spectre ASCII output file and returns a dict:
+      { signal_name: np.ndarray of values }
+    Includes 'time' as one of the traces.
+    Only saves traces listed in SIGNALS (plus 'time').
     """
     traces = {s: [] for s in SIGNALS}
+    traces["time"] = []  # always include time
+
     current_values = None
     recording_values = False
 
@@ -126,19 +126,26 @@ def parse_sim_output(dump_path, SIGNALS):
             if not recording_values:
                 continue
 
-            # Start of a new value block (time = new sample)
+            # Start of a new timestep
             if line.startswith('"time"'):
-                # Save the previous sample if any
+                # Save the previous timestep
                 if current_values:
                     for key, val in current_values.items():
                         if key in traces:
                             traces[key].append(val)
 
-                # Begin a new dictionary for this timestep
+                # Begin new timepoint
                 current_values = {}
+                parts = line.split(maxsplit=1)
+                if len(parts) == 2:
+                    try:
+                        current_values["time"] = float(parts[1])
+                    except ValueError:
+                        current_values["time"] = np.nan
+                continue
 
-            # Parse each "name" value line
-            elif line.startswith('"') and current_values is not None:
+            # Parse "name" value
+            if line.startswith('"') and current_values is not None:
                 parts = line.split(maxsplit=1)
                 if len(parts) == 2:
                     name = parts[0].strip('"')
@@ -146,17 +153,18 @@ def parse_sim_output(dump_path, SIGNALS):
                         val = float(parts[1])
                         current_values[name] = val
                     except ValueError:
-                        pass  # Ignore non-numeric values
+                        pass  # skip malformed lines
 
-        # Store last sample
+        # Store last timestep
         if current_values:
             for key, val in current_values.items():
                 if key in traces:
                     traces[key].append(val)
 
-    # Convert to numpy arrays
+    # Convert all lists to numpy arrays
     traces = {k: np.array(v) for k, v in traces.items() if len(v) > 0}
     return traces
+
 
 def plot_signals(trace_data_dict:dict, plot_start:float, plot_end:float, minor_ticks:float=2.5):
     # 5440 traces for example_config_freepdk45
@@ -271,3 +279,4 @@ if __name__ == '__main__':
             pickle.dump(trace_data, f, protocol=pickle.HIGHEST_PROTOCOL)  
             
     plot_signals(trace_data, 5, 105)
+    #print(trace_data.keys())

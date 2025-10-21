@@ -6,8 +6,8 @@ num_r_ports = 0
 num_w_ports = 0
 
 
-spice_name = 'ngspice'
-# spice_name = 'spectre'
+#spice_name = 'ngspice'
+spice_name = 'spectre'
 
 tech_name = "freepdk45"
 nominal_corner_only = False
