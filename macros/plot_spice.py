@@ -76,7 +76,7 @@ def modify_spice_file(lang='ngspice'):
                     f.write(f'save {signal}\n')
                 f.write('\n')
                 f.write("simulatorOptions options reltol=1e-3 vabstol=1e-6 iabstol=1e-12 temp=25 try_fast_op=no rforce=10m maxnotes=10 maxwarns=10 preservenode=all topcheck=fixall digits=5 cols=80 dc_pivot_check=yes pivrel=1e-3\n")
-                f.write("tran tran step=5p stop=500n ic=node write=spectre.dc errpreset=moderate annotate=status maxiters=5\n")
+                f.write("tran tran step=5p stop=200n ic=node write=spectre.dc errpreset=moderate annotate=status maxiters=5\n")
                 f.write("simulator lang=spice\n")
             
 
