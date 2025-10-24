@@ -11,9 +11,12 @@ import pickle
 import time
 import numpy as np
 
-DUT_NAME = 'example_config_freepdk45'
+# DUT_NAME = 'example_config_freepdk45'
 # DUT_NAME = 'freepdk45_1rw_32x64_8'
+# DUT_NAME = 'freepdk45_netlist_only'
+DUT_NAME = 'freepdk45_sram_1rw_32x256'
 STOP_TIME = '100n'
+STEP_SIZE = '10p'
 
 SIGNALS = [
     f'dout0_0',
@@ -47,7 +50,7 @@ mod_spice_path = f'{dirpath}/functional_stim_modified.sp'
 rawfile_path = f'{dirpath}/sim_results.rawspice'
 rawfile_pkl_path = f'{dirpath}/sim_results.pkl'
 pkl_spectre_traces = f'{dirpath}/saved_traces.pkl'
-spectre_dump_path = f'{dirpath}/results/home/jwbuchta/OpenRAM/macros/example_config_freepdk45/functional_stim_modified.sp/tran.tran.tran'
+spectre_dump_path = f'{dirpath}/results/home/jwbuchta/OpenRAM/macros/{DUT_NAME}/functional_stim_modified.sp/tran.tran.tran'
 
 def modify_spice_file(lang='ngspice'):
     # Overwrite the stimulus, plotting signals as necessary
@@ -76,7 +79,7 @@ def modify_spice_file(lang='ngspice'):
                     f.write(f'save {signal}\n')
                 f.write('\n')
                 f.write("simulatorOptions options reltol=1e-3 vabstol=1e-6 iabstol=1e-12 temp=25 try_fast_op=no rforce=10m maxnotes=10 maxwarns=10 preservenode=all topcheck=fixall digits=5 cols=80 dc_pivot_check=yes pivrel=1e-3\n")
-                f.write("tran tran step=5p stop=200n ic=node write=spectre.dc errpreset=moderate annotate=status maxiters=5\n")
+                f.write(f"tran tran step={STEP_SIZE} stop={STOP_TIME} ic=node write=spectre.dc errpreset=moderate annotate=status maxiters=5\n")
                 f.write("simulator lang=spice\n")
             
 
@@ -201,13 +204,12 @@ def plot_signals(trace_data_dict:dict, plot_start:float, plot_end:float, minor_t
             sig_name = sig.split('.')[-1]
             plt.plot(sim_time_ns, trace_data, label=sig_name)
             
-            # Choose where to place the label (start or end of trace)
-            y_pos = trace_data[0]
+            y_pos = i * 2 + 0.5
 
             # Add text label slightly offset to avoid overlap
             plt.text(
                 plot_start + (0.025 * (plot_end-plot_start)),  # small horizontal offset
-                y_pos + 0.5,
+                y_pos,
                 sig_name,
                 fontsize=10,
                 color='black',
