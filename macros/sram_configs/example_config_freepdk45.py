@@ -9,6 +9,8 @@ num_w_ports = 0
 #spice_name = 'ngspice'
 spice_name = 'spectre'
 
+delay_chain_stages = 37
+
 tech_name = "freepdk45"
 nominal_corner_only = False
 process_corners = ["TT"]
